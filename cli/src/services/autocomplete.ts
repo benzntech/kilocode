@@ -6,12 +6,14 @@
 import { commandRegistry } from "../commands/core/registry.js"
 import { extractCommandName, parseCommand } from "../commands/core/parser.js"
 import type {
-	Command,
-	ArgumentSuggestion,
-	ArgumentProviderContext,
 	ArgumentDefinition,
-	InputState,
 	ArgumentProvider,
+	ArgumentProviderContext,
+	ArgumentSuggestion,
+	ArgumentValue,
+	Command,
+	CommandContext,
+	InputState,
 } from "../commands/core/types.js"
 
 // ============================================================================
@@ -446,6 +448,7 @@ function createProviderContext(
 			profileLoading: commandContext.profileLoading || false,
 			updateProviderModel: commandContext.updateProviderModel,
 			refreshRouterModels: commandContext.refreshRouterModels,
+			customModes: commandContext.customModes || [],
 		}
 	}
 
@@ -479,13 +482,21 @@ function getProvider(
 
 	// Use static values
 	if (definition.values) {
-		return async () =>
-			definition.values!.map((v) => ({
+		return async () => {
+			const values: ArgumentValue[] =
+				typeof definition.values === "function"
+					? commandContext
+						? definition.values(commandContext as CommandContext)
+						: []
+					: (definition.values ?? [])
+
+			return values.map((v) => ({
 				value: v.value,
 				description: v.description || "",
 				matchScore: 1,
 				highlightedValue: v.value,
 			}))
+		}
 	}
 
 	// Use default provider if available
