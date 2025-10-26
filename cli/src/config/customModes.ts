@@ -9,56 +9,14 @@ import { join } from "path"
 import { homedir } from "os"
 import { parse } from "yaml"
 import type { ModeConfig } from "../types/messages.js"
+import { logs } from "../services/logs.js"
 
 /**
  * Get the global custom modes file path
  * @returns Path to global custom_modes.yaml
  */
 function getGlobalModesPath(): string {
-	// VS Code global storage path varies by platform
-	const homeDir = homedir()
-
-	// Try to construct the path to VS Code global storage
-	// This matches the path used by the VS Code extension
-	if (process.platform === "darwin") {
-		// macOS
-		return join(
-			homeDir,
-			"Library",
-			"Application Support",
-			"Code",
-			"User",
-			"globalStorage",
-			"kilocode.kilo-code",
-			"settings",
-			"custom_modes.yaml",
-		)
-	} else if (process.platform === "win32") {
-		// Windows
-		return join(
-			homeDir,
-			"AppData",
-			"Roaming",
-			"Code",
-			"User",
-			"globalStorage",
-			"kilocode.kilo-code",
-			"settings",
-			"custom_modes.yaml",
-		)
-	} else {
-		// Linux
-		return join(
-			homeDir,
-			".config",
-			"Code",
-			"User",
-			"globalStorage",
-			"kilocode.kilo-code",
-			"settings",
-			"custom_modes.yaml",
-		)
-	}
+	return join(homedir(), ".config", "kilocode", "modes.yaml")
 }
 
 /**
@@ -93,11 +51,11 @@ function parseCustomModes(content: string, source: "global" | "project"): ModeCo
 
 		// Validate and normalize mode configs
 		return modes
-			.filter((mode: any) => {
+			.filter((mode: Record<string, any>) => {
 				// Must have at least slug and name
 				return mode && typeof mode === "object" && mode.slug && mode.name
 			})
-			.map((mode: any) => ({
+			.map((mode: Record<string, any>) => ({
 				slug: mode.slug,
 				name: mode.name,
 				description: mode.description,
@@ -106,7 +64,7 @@ function parseCustomModes(content: string, source: "global" | "project"): ModeCo
 				source: mode.source || source,
 			}))
 	} catch (error) {
-		// Silent fail - return empty array if parsing fails
+		logs.warn(`Failed to parse ${source} custom modes file.`, "custom-modes", { error })
 		return []
 	}
 }
@@ -126,7 +84,7 @@ async function loadGlobalCustomModes(): Promise<ModeConfig[]> {
 		const content = await readFile(globalPath, "utf-8")
 		return parseCustomModes(content, "global")
 	} catch (error) {
-		// Silent fail - return empty array if reading fails
+		logs.warn("Failed to read or parse global custom modes file.", "custom-modes", { path: globalPath, error })
 		return []
 	}
 }
@@ -147,7 +105,7 @@ async function loadProjectCustomModes(workspace: string): Promise<ModeConfig[]> 
 		const content = await readFile(projectPath, "utf-8")
 		return parseCustomModes(content, "project")
 	} catch (error) {
-		// Silent fail - return empty array if reading fails
+		logs.warn("Failed to read or parse project custom modes file.", "custom-modes", { path: projectPath, error })
 		return []
 	}
 }

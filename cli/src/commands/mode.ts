@@ -2,7 +2,7 @@
  * /mode command - Switch between different modes
  */
 
-import type { Command, ArgumentValue } from "./core/types.js"
+import type { Command, ArgumentValue, CommandContext } from "./core/types.js"
 import { DEFAULT_MODES, getAllModes } from "../constants/modes/defaults.js"
 
 export const modeCommand: Command = {
@@ -18,8 +18,31 @@ export const modeCommand: Command = {
 			name: "mode-name",
 			description: "The mode to switch to",
 			required: true,
-			// Values will be populated dynamically from context
 			placeholder: "Select a mode",
+			values: (context: CommandContext) => {
+				const allModes = getAllModes(context.customModes)
+				return allModes.map((mode) => ({
+					name: mode.slug,
+					description: mode.description || `Switch to ${mode.name} mode`,
+				}))
+			},
+			validate: (value: ArgumentValue, context: CommandContext) => {
+				if (typeof value !== "string") {
+					return {
+						isValid: false,
+						message: "Mode name must be a string.",
+					}
+				}
+				const allModes = getAllModes(context.customModes)
+				const availableSlugs = allModes.map((mode) => mode.slug)
+				if (!availableSlugs.includes(value)) {
+					return {
+						isValid: false,
+						message: `Invalid mode "${value}". Available modes: ${availableSlugs.join(", ")}`,
+					}
+				}
+				return { isValid: true }
+			},
 		},
 	],
 	handler: async (context) => {
@@ -27,7 +50,6 @@ export const modeCommand: Command = {
 
 		// Get all available modes (default + custom)
 		const allModes = getAllModes(customModes)
-		const availableSlugs = allModes.map((mode) => mode.slug)
 
 		if (args.length === 0 || !args[0]) {
 			// Show current mode and available modes
@@ -46,16 +68,6 @@ export const modeCommand: Command = {
 		}
 
 		const requestedMode = args[0].toLowerCase()
-
-		if (!availableSlugs.includes(requestedMode)) {
-			addMessage({
-				id: Date.now().toString(),
-				type: "error",
-				content: `Invalid mode "${requestedMode}". Available modes: ${availableSlugs.join(", ")}`,
-				ts: Date.now(),
-			})
-			return
-		}
 
 		// Find the mode to get its display name
 		const mode = allModes.find((m) => m.slug === requestedMode)

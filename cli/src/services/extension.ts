@@ -70,13 +70,22 @@ export interface ExtensionServiceEvents {
  * await service.sendWebviewMessage({ type: 'askResponse', text: 'Hello' })
  * ```
  */
+/**
+ * Fully processed and resolved options for ExtensionService
+ */
+interface ProcessedExtensionServiceOptions {
+	workspace: string
+	mode: string
+	extensionBundlePath: string
+	extensionRootPath: string
+	identity?: IdentityInfo
+	customModes?: ModeConfig[]
+}
+
 export class ExtensionService extends EventEmitter {
 	private extensionHost: ExtensionHost
 	private messageBridge: MessageBridge
-	private options: Required<Omit<ExtensionServiceOptions, "identity" | "customModes">> & {
-		identity?: IdentityInfo
-		customModes?: ModeConfig[]
-	}
+	private options: ProcessedExtensionServiceOptions
 	private isInitialized = false
 	private isDisposed = false
 
@@ -88,27 +97,22 @@ export class ExtensionService extends EventEmitter {
 
 		// Set default options
 		this.options = {
-			workspace: options.workspace || process.cwd(),
-			mode: options.mode || "code",
-			extensionBundlePath: options.extensionBundlePath || extensionPaths.extensionBundlePath,
-			extensionRootPath: options.extensionRootPath || extensionPaths.extensionRootPath,
-			...(options.identity && { identity: options.identity }),
-			...(options.customModes && { customModes: options.customModes }),
+			workspace: options.workspace ?? process.cwd(),
+			mode: options.mode ?? "code",
+			extensionBundlePath: options.extensionBundlePath ?? extensionPaths.extensionBundlePath,
+			extensionRootPath: options.extensionRootPath ?? extensionPaths.extensionRootPath,
+			identity: options.identity,
+			customModes: options.customModes,
 		}
 
 		// Create extension host
-		const hostOptions: ExtensionHostOptions = {
+		this.extensionHost = createExtensionHost({
 			workspacePath: this.options.workspace,
 			extensionBundlePath: this.options.extensionBundlePath,
 			extensionRootPath: this.options.extensionRootPath,
-		}
-		if (this.options.identity) {
-			hostOptions.identity = this.options.identity
-		}
-		if (this.options.customModes) {
-			hostOptions.customModes = this.options.customModes
-		}
-		this.extensionHost = createExtensionHost(hostOptions)
+			identity: this.options.identity,
+			customModes: this.options.customModes,
+		})
 
 		// Create message bridge
 		this.messageBridge = createMessageBridge({
