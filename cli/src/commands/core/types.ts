@@ -115,6 +115,7 @@ export interface ArgumentProviderContext {
 		profileLoading: boolean
 		updateProviderModel: (modelId: string) => Promise<void>
 		refreshRouterModels: () => Promise<void>
+		customModes: ModeConfig[]
 	}
 }
 
@@ -178,7 +179,7 @@ export interface ArgumentDefinition {
 
 	// Provider options
 	provider?: ArgumentProvider
-	values?: ArgumentValue[]
+	values?: ArgumentValue[] | ((context: CommandContext) => ArgumentValue[])
 	conditionalProviders?: ConditionalProvider[]
 	defaultProvider?: ArgumentProvider
 
@@ -186,7 +187,7 @@ export interface ArgumentDefinition {
 	dependsOn?: ArgumentDependency[]
 
 	// Validation
-	validate?: (value: string, context: ArgumentProviderContext) => Promise<ValidationResult> | ValidationResult
+	validate?: (value: string, context: CommandContext) => ValidationResult | Promise<ValidationResult>
 
 	// Transform
 	transform?: (value: string) => string

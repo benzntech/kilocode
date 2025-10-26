@@ -101,18 +101,20 @@ export class ExtensionService extends EventEmitter {
 			mode: options.mode ?? "code",
 			extensionBundlePath: options.extensionBundlePath ?? extensionPaths.extensionBundlePath,
 			extensionRootPath: options.extensionRootPath ?? extensionPaths.extensionRootPath,
-			identity: options.identity,
-			customModes: options.customModes,
+			...(options.identity && { identity: options.identity }),
+			...(options.customModes && { customModes: options.customModes }),
 		}
 
-		// Create extension host
-		this.extensionHost = createExtensionHost({
+		const hostOptions: ExtensionHostOptions = {
 			workspacePath: this.options.workspace,
 			extensionBundlePath: this.options.extensionBundlePath,
 			extensionRootPath: this.options.extensionRootPath,
-			identity: this.options.identity,
-			customModes: this.options.customModes,
-		})
+			...(this.options.identity && { identity: this.options.identity }),
+			...(this.options.customModes && { customModes: this.options.customModes }),
+		}
+
+		// Create extension host
+		this.extensionHost = createExtensionHost(hostOptions)
 
 		// Create message bridge
 		this.messageBridge = createMessageBridge({

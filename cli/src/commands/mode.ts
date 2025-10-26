@@ -2,8 +2,8 @@
  * /mode command - Switch between different modes
  */
 
-import type { Command, ArgumentValue, CommandContext } from "./core/types.js"
-import { DEFAULT_MODES, getAllModes } from "../constants/modes/defaults.js"
+import type { Command, CommandContext } from "./core/types.js"
+import { getAllModes } from "../constants/modes/defaults.js"
 
 export const modeCommand: Command = {
 	name: "mode",
@@ -20,28 +20,24 @@ export const modeCommand: Command = {
 			required: true,
 			placeholder: "Select a mode",
 			values: (context: CommandContext) => {
-				const allModes = getAllModes(context.customModes)
+				const customModes = context.customModes || []
+				const allModes = getAllModes(customModes)
 				return allModes.map((mode) => ({
-					name: mode.slug,
+					value: mode.slug,
 					description: mode.description || `Switch to ${mode.name} mode`,
 				}))
 			},
-			validate: (value: ArgumentValue, context: CommandContext) => {
-				if (typeof value !== "string") {
-					return {
-						isValid: false,
-						message: "Mode name must be a string.",
-					}
-				}
-				const allModes = getAllModes(context.customModes)
+			validate: (value: string, context: CommandContext) => {
+				const customModes = context.customModes || []
+				const allModes = getAllModes(customModes)
 				const availableSlugs = allModes.map((mode) => mode.slug)
 				if (!availableSlugs.includes(value)) {
 					return {
-						isValid: false,
-						message: `Invalid mode "${value}". Available modes: ${availableSlugs.join(", ")}`,
+						valid: false,
+						error: `Invalid mode "${value}". Available modes: ${availableSlugs.join(", ")}`,
 					}
 				}
-				return { isValid: true }
+				return { valid: true }
 			},
 		},
 	],
