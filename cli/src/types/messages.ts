@@ -223,6 +223,11 @@ export interface ProviderSettings {
 	// Gemini CLI
 	geminiCliOAuthPath?: string
 	geminiCliProjectId?: string
+	geminiCliRouting?: {
+		enabled?: boolean
+		simpleThreshold?: number
+		showComplexity?: boolean
+	}
 
 	// Mistral
 	mistralApiKey?: string
