@@ -32,8 +32,8 @@ export const GeminiCli = ({ apiConfiguration, setApiConfigurationField }: Gemini
 	const showComplexity = apiConfiguration?.geminiCliRouting?.showComplexity ?? true
 
 	const handleRoutingEnabledChange = useCallback(
-		(event: Event) => {
-			const checked = (event.target as HTMLInputElement).checked
+		(e: any) => {
+			const checked = e.target.checked
 			setApiConfigurationField("geminiCliRouting", {
 				...apiConfiguration?.geminiCliRouting,
 				enabled: checked,
@@ -43,8 +43,8 @@ export const GeminiCli = ({ apiConfiguration, setApiConfigurationField }: Gemini
 	)
 
 	const handleThresholdChange = useCallback(
-		(event: Event) => {
-			const value = parseInt((event.target as HTMLInputElement).value, 10)
+		(e: any) => {
+			const value = parseInt(e.target.value, 10)
 			setApiConfigurationField("geminiCliRouting", {
 				...apiConfiguration?.geminiCliRouting,
 				simpleThreshold: value,
@@ -54,8 +54,8 @@ export const GeminiCli = ({ apiConfiguration, setApiConfigurationField }: Gemini
 	)
 
 	const handleShowComplexityChange = useCallback(
-		(event: Event) => {
-			const checked = (event.target as HTMLInputElement).checked
+		(e: any) => {
+			const checked = e.target.checked
 			setApiConfigurationField("geminiCliRouting", {
 				...apiConfiguration?.geminiCliRouting,
 				showComplexity: checked,
