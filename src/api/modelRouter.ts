@@ -89,12 +89,17 @@ export function detectComplexity(task: string): number {
 		"microservices",
 		"performance",
 		"scalability",
+		"scalable",
 		"security",
 		"integration",
 		"migration",
 		"restructure",
 		"overhaul",
 		"redesign",
+		"authentication",
+		"authorization",
+		"oauth",
+		"implement",
 	]
 
 	// Keywords that indicate simplicity
@@ -125,7 +130,9 @@ export function detectComplexity(task: string): number {
 	// Adjust by complex keywords (max +10 per keyword, cap at +40)
 	let complexMatches = 0
 	for (const keyword of complexKeywords) {
-		if (taskLower.includes(keyword)) {
+		// Use word boundary matching to avoid false positives
+		const regex = new RegExp(`\\b${keyword}\\b`, "i")
+		if (regex.test(task)) {
 			complexMatches++
 			score += 10
 		}
@@ -137,13 +144,15 @@ export function detectComplexity(task: string): number {
 	// Adjust by simple keywords (max -10 per keyword, cap at -40)
 	let simpleMatches = 0
 	for (const keyword of simpleKeywords) {
-		if (taskLower.includes(keyword)) {
+		// Use word boundary matching to avoid false positives
+		const regex = new RegExp(`\\b${keyword}\\b`, "i")
+		if (regex.test(task)) {
 			simpleMatches++
 			score -= 10
 		}
 	}
 	if (simpleMatches * 10 > 40) {
-		score = score + 40 - simpleMatches * 10 // cap simple penalty
+		score += simpleMatches * 10 - 40 // Add back the excess penalty
 	}
 
 	// Adjust by task length
@@ -174,10 +183,12 @@ export function detectComplexity(task: string): number {
 	}
 
 	// Check for lists or multiple steps (indicates complexity)
-	const hasNumberedList = /\d+\.\s/.test(task)
-	const hasBulletList = /[-*]\s/.test(task)
-	if (hasNumberedList || hasBulletList) {
-		score += 10
+	const numberedListMatches = task.match(/\d+\.\s/g)
+	const bulletListMatches = task.match(/[-*]\s/g)
+	const listItemCount = (numberedListMatches?.length || 0) + (bulletListMatches?.length || 0)
+	if (listItemCount > 0) {
+		// Base bonus for having a list + bonus per item (capped at 5 items)
+		score += 15 + Math.min(listItemCount, 5) * 5
 	}
 
 	// Check for code blocks (indicates technical complexity)
