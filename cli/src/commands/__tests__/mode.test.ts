@@ -7,6 +7,14 @@ import { modeCommand } from "../mode.js"
 import type { CommandContext } from "../core/types.js"
 import type { ModeConfig } from "../../types/messages.js"
 
+// Mock getSearchedPaths
+vi.mock("../../config/customModes.js", () => ({
+	getSearchedPaths: vi.fn().mockReturnValue([
+		{ type: "global", path: "/mock/global/path", found: false },
+		{ type: "project", path: "/mock/project/path", found: true, modesCount: 1 },
+	]),
+}))
+
 describe("modeCommand", () => {
 	let mockContext: CommandContext
 	let mockAddMessage: ReturnType<typeof vi.fn>
@@ -183,7 +191,10 @@ describe("modeCommand", () => {
 			expect(mockAddMessage).toHaveBeenCalledTimes(1)
 			const message = mockAddMessage.mock.calls[0][0]
 			expect(message.type).toBe("error")
-			expect(message.content).toContain('Invalid mode "invalid-mode"')
+			expect(message.content).toContain('Error: Mode "invalid-mode" not found.')
+			expect(message.content).toContain("The CLI searched for custom modes in:")
+			expect(message.content).toContain("Global: /mock/global/path (not found)")
+			expect(message.content).toContain("Project: /mock/project/path (found, 1 mode(s))")
 			expect(message.content).toContain("Available modes:")
 		})
 
